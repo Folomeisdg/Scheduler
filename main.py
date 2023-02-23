@@ -2,11 +2,11 @@ import csv
 
 
 def inPut(filename):
-    job = []
-    with open(filename, 'r') as f:
-        reader = csv.reader(f)
-        next(reader)
+    jobs = []
+    with open(filename, 'r') as csvfile:
+        reader = csv.reader(csvfile)
         return [(int(x[0]), int(x[1]), int(x[2]), int(x[3])) for x in reader]
+
 
 
 def fcfs(jobs):
@@ -15,8 +15,8 @@ def fcfs(jobs):
     for pid, _, arrival, duration in jobs:
         if arrival > current_time:
             current_time = arrival
-            schedule.append((pid, current_time, current_time + duration))
-            current_time += duration
+        schedule.append((pid, current_time, current_time + duration))
+        current_time += duration
 
     displaySchedule(schedule, "FCFS")
     compute_metrics(jobs, schedule)
@@ -30,8 +30,8 @@ def sjf(jobs):
     for pid, _, arrival, duration in jobs:
         if arrival > current_time:
             current_time = arrival
-            schedule.append((pid, current_time, current_time + duration))
-            current_time += duration
+        schedule.append((pid, current_time, current_time + duration))
+        current_time += duration
     displaySchedule(schedule, "SJF")
     compute_metrics(jobs, schedule)
     return schedule
@@ -53,11 +53,12 @@ def stcf(jobs):
             current_time = min(remaining_jobs, key=lambda x: x[1])[1]
             continue
 
-        pid, _, duration = next_job
+        pid, _, arrival, duration = next_job
         if arrival > current_time:
             current_time = arrival
-            schedule.append((pid, current_time, current_time + duration))
-            current_time += duration
+        schedule.append((pid, current_time, current_time + duration))
+        current_time += duration
+        remaining_jobs.remove(next_job)
     displaySchedule(schedule, "STCF")
     compute_metrics(jobs, schedule)
     return schedule
@@ -76,18 +77,18 @@ def rr(jobs, timeslice):
             schedule.append((pid, current_time, current_time + duration))
             current_time += duration
             remaining_jobs.remove(next_job)
-    else:
-        next_job = remaining_jobs.pop(0)
-        pid, _, arrival, duration = next_job
-        if arrival > current_time:
-            current_time = arrival
-        if duration > timeslice:
-            schedule.append((pid, current_time, current_time + duration))
-            current_time += timeslice
-            remaining_jobs.append(next_job)
         else:
-            schedule.append((pid, current_time, current_time + duration))
-            current_time += duration
+            next_job = remaining_jobs.pop(0)
+            pid, _, arrival, duration = next_job
+            if arrival > current_time:
+                current_time = arrival
+            if duration > timeslice:
+                schedule.append((pid, current_time, current_time + timeslice))
+                current_time += timeslice
+                remaining_jobs.append((pid, _, arrival, current_time - timeslice))
+            else:
+                schedule.append((pid, current_time, current_time + duration))
+                current_time += duration
 
     displaySchedule(schedule, "RR")
     compute_metrics(jobs, schedule)
@@ -97,7 +98,7 @@ def rr(jobs, timeslice):
 def displaySchedule(schedule, method):
     print(method, "\n")
     for pid, start, end in schedule:
-        print(pid, ":", start, "to", end, "\n")
+        print(start, ":", "PID", pid, "\n")
 
 
 def compute_metrics(jobs, schedule):
@@ -129,6 +130,7 @@ def main():
     sjf(inPut("jobs.csv"))
     stcf(inPut("jobs.csv"))
     rr(inPut("jobs.csv"), 5)
+
 
 
 main()
